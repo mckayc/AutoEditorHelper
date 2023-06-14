@@ -22,3 +22,13 @@ Write-Host "margin = $margin"
 auto-editor $filePath --margin $margin'sec' --export $videoEditor --edit audio:threshold=$audioThreshold%
 
 
+$test = "cool beans"
+$test2 = Read-Host -Prompt "Type something or leave blank:"
+
+if ($test2 -ne '')
+{
+    $test = $test2
+}
+
+$test
+
