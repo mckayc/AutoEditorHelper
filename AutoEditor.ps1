@@ -6,6 +6,7 @@
 # 1. Download all files in this repository. Put them in a folder. You can name the folder whatever you want and place it wherever you want.
 # 2. Right click on the bat file and make it a shortcut. In the shortcut properties change the icon. Change it to whatever you want. I added an .ico shortcut file that you can use.
 # 3. Move the shortcut file to %programdata%\Microsoft\Windows\Start Menu\Program  (your system will have to have "Show hidden files" enabled in Explorer)
+# (Note; if you put the shortcut on your desktop I think it also becomes searchable)
 # 4. Press the windows key and type in "Auto Editor" and the shortcut to the bat file should now show up. Click on it or press Enter when it is highlighted.
 ###########################################################################################################################################################################
 
