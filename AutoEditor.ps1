@@ -2,13 +2,20 @@
 # If you do not already have Auto-Editor installed, make sure you have Python installed then run: pip install auto-editor
 # Check the website for more info: https://auto-editor.com/ (Note; this is an awesome piece of software. I did not write it, I am only writing this script to simplify running it.)
 
+######################################### Instructions for making this script act as an app (searchable in the Windows search bar #########################################
+# 1. Download all files in this repository. Put them in a folder. You can name the folder whatever you want and place it wherever you want.
+# 2. Right click on the bat file and make it a shortcut. In the shortcut properties change the icon. Change it to whatever you want. I added an .ico shortcut file that you can use.
+# 3. Move the shortcut file to %programdata%\Microsoft\Windows\Start Menu\Program  (your system will have to have "Show hidden files" enabled in Explorer)
+# 4. Press the windows key and type in "Auto Editor" and the shortcut to the bat file should now show up. Click on it or press Enter when it is highlighted.
+###########################################################################################################################################################################
+
 # Allow file to be run
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 # Set Default variables
 
-$audioThreshold = 10
-$videoEditor = "resolve"
+$audioThreshold = 7
+$videoEditor = "final-cut-pro"
 $margin = .2
 
 # Enter file path of video file
