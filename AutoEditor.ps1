@@ -10,57 +10,169 @@
 # 4. Press the windows key and type in "Auto Editor" and the shortcut to the bat file should now show up. Click on it or press Enter when it is highlighted.
 ###########################################################################################################################################################################
 
-# Allow file to be run
+## Useful Commands ##
+# Check Version: auto-editor --version    (Note:24.3.1 is what I am using 2024-02-28) (2024-05-20 - Now using version 24.13.1)
+# Install the version that has worked best for me: pip install auto-editor==24.13.1
+# Uninstall: pip uninstall auto-editor
+# Upgrade: pip install auto-editor --upgrade
+
+# Bypass the execution policy for the current session
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# Set Default variables
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
-$audioThreshold = 7
-$videoEditor = "final-cut-pro"
-$margin = .2
+# Initialize form and controls
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "Video Editor Settings"
+$form.Size = New-Object System.Drawing.Size(500, 500)
+$form.StartPosition = "CenterScreen"
 
-# Enter file path of video file
-$filePath = Read-Host -Prompt 'Right click on the video file then click "Copy as Path" - Paste then press "Enter"'
+# Create labels and textboxes for audio threshold, margin before, and margin after
+$audioThresholdLabel = New-Object System.Windows.Forms.Label
+$audioThresholdLabel.Text = "Audio Threshold:"
+$audioThresholdLabel.Location = New-Object System.Drawing.Point(10, 20)
+$form.Controls.Add($audioThresholdLabel)
 
-# Display defaults
-Write-Host "Default Audio Threshold = $audioThreshold"
-Write-Host "Video Editor = $videoEditor"
-Write-Host "margin = $margin"
+$audioThreshold = New-Object System.Windows.Forms.TextBox
+$audioThreshold.Text = "1.9"
+$audioThreshold.Location = New-Object System.Drawing.Point(150, 20)
+$form.Controls.Add($audioThreshold)
 
-# Give option to change defaults
-$defaults = Read-Host -Prompt 'Would you like to change the default values? (Y / (blank))'
+$marginBeforeLabel = New-Object System.Windows.Forms.Label
+$marginBeforeLabel.Text = "Margin Before:"
+$marginBeforeLabel.Location = New-Object System.Drawing.Point(10, 60)
+$form.Controls.Add($marginBeforeLabel)
 
-if ($defaults -eq 'y')
-{
-    # Allow changes to audio threshold
-    $audioThresholdNew = Read-Host -Prompt "The default audio threshold is $audioThreshold - Please input a threshold (0-100) or leave blank to keep the default"
+$marginBefore = New-Object System.Windows.Forms.TextBox
+$marginBefore.Text = ".03"
+$marginBefore.Location = New-Object System.Drawing.Point(150, 60)
+$form.Controls.Add($marginBefore)
 
-    if ($audioThresholdNew -ne '')
-        {
-            $audioThreshold = $audioThresholdNew
-        }
+$marginAfterLabel = New-Object System.Windows.Forms.Label
+$marginAfterLabel.Text = "Margin After:"
+$marginAfterLabel.Location = New-Object System.Drawing.Point(10, 100)
+$form.Controls.Add($marginAfterLabel)
 
-    # Allow changes to video editor
-    $videoEditorNew = Read-Host -Prompt "The default editor is $videoEditor - Please input an editor (resolve, final-cut-pro, shotcut) or leave blank to keep the default"
+$marginAfter = New-Object System.Windows.Forms.TextBox
+$marginAfter.Text = ".04"
+$marginAfter.Location = New-Object System.Drawing.Point(150, 100)
+$form.Controls.Add($marginAfter)
 
-    if ($videoEditorNew -ne '')
-        {
-            $videoEditor = $videoEditorNew
-        }
+# Create a dropdown for video editor
+$videoEditorLabel = New-Object System.Windows.Forms.Label
+$videoEditorLabel.Text = "Video Editor:"
+$videoEditorLabel.Location = New-Object System.Drawing.Point(10, 140)
+$form.Controls.Add($videoEditorLabel)
 
-    # Allow changes to margin
-    $marginNew = Read-Host -Prompt "The default margin is $margin - Please input a number (0.0 - ~) or leave blank to keep the default"
+$videoEditor = New-Object System.Windows.Forms.ComboBox
+$videoEditor.Items.AddRange(@("resolve", "final-cut-pro", "shotcut"))
+$videoEditor.SelectedIndex = 0
+$videoEditor.Location = New-Object System.Drawing.Point(150, 140)
+$form.Controls.Add($videoEditor)
 
-    if ($marginNew -ne '')
-        {
-            $margin = $marginNew
-            }
+# Create a textbox to show the log with a monospaced font
+$logBox = New-Object System.Windows.Forms.TextBox
+$logBox.Multiline = $true
+$logBox.ReadOnly = $true
+$logBox.ScrollBars = 'Vertical'
+$logBox.Size = New-Object System.Drawing.Size(450, 150)
+$logBox.Location = New-Object System.Drawing.Point(10, 240)
+$logBox.Font = New-Object System.Drawing.Font('Consolas', 10) # Set monospaced font
+$form.Controls.Add($logBox)
+
+# Create a label and box for dragging files
+$dropLabel = New-Object System.Windows.Forms.Label
+$dropLabel.Text = "Drag files here:"
+$dropLabel.Size = New-Object System.Drawing.Size(100, 30)
+$dropLabel.Location = New-Object System.Drawing.Point(10, 180)
+$form.Controls.Add($dropLabel)
+
+# Create a panel to serve as a drag-and-drop area with visual indication
+$dropBox = New-Object System.Windows.Forms.Panel
+$dropBox.BorderStyle = 'Fixed3D'
+$dropBox.AllowDrop = $true
+$dropBox.Size = New-Object System.Drawing.Size(300, 40)
+$dropBox.Location = New-Object System.Drawing.Point(150, 180)
+$dropBox.BackColor = [System.Drawing.Color]::LightGray
+$dropBox.BorderStyle = 'FixedSingle'
+$form.Controls.Add($dropBox)
+
+# Add instructional text inside the drag-and-drop area
+$dropBoxLabel = New-Object System.Windows.Forms.Label
+$dropBoxLabel.Text = "Drop files here"
+$dropBoxLabel.TextAlign = 'MiddleCenter'
+$dropBoxLabel.Dock = 'Fill'
+$dropBox.Controls.Add($dropBoxLabel)
+
+# Function to log actions in the logBox
+function Log-Message {
+    param ($message)
+    $logBox.AppendText("$message`r`n")
+    $logBox.ScrollToCaret()
 }
 
-# Display defaults
-Write-Host "Default Audio Threshold = $audioThreshold"
-Write-Host "Video Editor = $videoEditor"
-Write-Host "margin = $margin"
+# Function to show an error message box
+function Show-Error {
+    param ($message)
+    [System.Windows.Forms.MessageBox]::Show($message, "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+}
 
-# Run the script
-auto-editor $filePath --margin $margin'sec' --export $videoEditor --edit audio:threshold=$audioThreshold%
+# Handle file drag and drop
+$dropBox.Add_DragEnter({
+    if ($_.Data.GetDataPresent([Windows.Forms.DataFormats]::FileDrop)) {
+        $_.Effect = [Windows.Forms.DragDropEffects]::Copy
+        # Change the background color to indicate an active drag
+        $dropBox.BackColor = [System.Drawing.Color]::LightGreen
+    }
+})
+
+$dropBox.Add_DragLeave({
+    # Restore the background color when the drag leaves the area
+    $dropBox.BackColor = [System.Drawing.Color]::LightGray
+})
+
+$dropBox.Add_DragDrop({
+    $dropBox.BackColor = [System.Drawing.Color]::LightGray # Restore background color after drop
+    $files = $_.Data.GetData([Windows.Forms.DataFormats]::FileDrop)
+    foreach ($file in $files) {
+        try {
+            # Construct the auto-editor command with quoted file paths
+            $filePath = "`"$file`""
+            $marginBeforeValue = $marginBefore.Text
+            $marginAfterValue = $marginAfter.Text
+            $audioThresholdValue = $audioThreshold.Text
+            $videoEditorValue = $videoEditor.SelectedItem
+            
+            # Log the details
+            Log-Message "Processing file: $filePath"
+            Log-Message "Audio Threshold: $audioThresholdValue"
+            Log-Message "Margin Before: $marginBeforeValue"
+            Log-Message "Margin After: $marginAfterValue"
+            Log-Message "Video Editor: $videoEditorValue"
+            
+            # Construct the command string
+            $command = "auto-editor '$filePath' --margin $marginBeforeValue's',$marginAfterValue'sec' --export $videoEditorValue --edit audio:threshold=$audioThresholdValue%"
+
+            # Log the command being run
+            Log-Message "Running command: $command"
+            
+            # Run the command and capture output
+            $process = Start-Process powershell -ArgumentList "-Command & { $command }" -PassThru -Wait -RedirectStandardError "error.log" -RedirectStandardOutput "output.log"
+
+            # Check if there are errors
+            $errorLog = Get-Content "error.log"
+            if ($errorLog) {
+                Show-Error "The command failed with the following error(s):`r`n$errorLog"
+            }
+        } catch {
+            # Catch and display any exceptions
+            Show-Error "An error occurred: $_"
+        }
+    }
+})
+
+# Show the form
+$form.Topmost = $true
+$form.Add_Shown({ $form.Activate() })
+[void]$form.ShowDialog()
